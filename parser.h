@@ -18,7 +18,6 @@ typedef enum {
   CMP_OP,
   NUM,
   ID,
-  STRING,
   LP,
   RP,
   COMMA,

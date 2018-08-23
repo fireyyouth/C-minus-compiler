@@ -22,7 +22,6 @@ map<node_t, const char *> type_to_name = {{ASSIGN, "ASSIGN"},
                                           {CMP_OP, "CMP_OP"},
                                           {NUM, "NUM"},
                                           {ID, "ID"},
-                                          {STRING, "STRING"},
                                           {LP, "LP"},
                                           {RP, "RP"},
                                           {COMMA, "COMMA"},
@@ -158,9 +157,6 @@ unique_ptr<Node> Parser::build_unit() {
   switch (this->focus->type) {
   case NUM:
     consume_token(NUM);
-    break;
-  case STRING:
-    consume_token(STRING);
     break;
   case ID:
     consume_token(ID);
