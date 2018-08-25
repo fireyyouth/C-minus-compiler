@@ -5,41 +5,24 @@
 #include <vector>
 #include "parser.h"
 
+#define DEBUG
+#include "debug.h"
+
 using namespace std;
 
 struct ParseError {
   ParseError(int line) { printf("error at %d\n", line); }
 };
-map<node_t, const char *> type_to_name = {{ASSIGN, "ASSIGN"},
-                                          {DEFINE, "DEFINE"},
-                                          {EXPR, "EXPR"},
-                                          {BOOL_TERM, "BOOL_TERM"},
-                                          {CMP_TERM, "CMP_TERM"},
-                                          {UNIT, "UNIT"},
-                                          {ROOT, "ROOT"},
-                                          {ARITH_OP, "ARITH_OP"},
-                                          {BOOL_OP, "BOOL_OP"},
-                                          {CMP_OP, "CMP_OP"},
-                                          {NUM, "NUM"},
-                                          {ID, "ID"},
-                                          {LP, "LP"},
-                                          {RP, "RP"},
-                                          {COMMA, "COMMA"},
-                                          {LBRACE, "LBRACE"},
-                                          {RBRACE, "RBRACE"},
-                                          {SEMICOLON, "SEMICOLON"},
-                                          {EQUAL, "EQUAL"},
-                                          {DEF, "DEF"}};
 
 
-
-#define consume_token(token)                                                   \
+#define consume_token(_type)                                                   \
   do {                                                                         \
-    if (this->focus == end || this->focus->type != token) {                                \
+    if (this->focus == end || this->focus->type != _type) {                                \
       throw ParseError(__LINE__);                                              \
     } else {                                                                   \
-      node->kids.push_back(make_unique<Node>(token));                          \
-      printf("%s\n", type_to_name[this->focus->type]);                               \
+      node->kids.push_back(make_unique<Node>(_type));                          \
+      node->kids.back()->content = this->focus->content;         \
+      debug("%s\n", type_to_name[this->focus->type].data());                               \
       ++this->focus;                                                                 \
     }                                                                          \
   } while (0)
@@ -50,27 +33,21 @@ map<node_t, const char *> type_to_name = {{ASSIGN, "ASSIGN"},
   } while (0)
 
 Parser::Parser(const Token *b, const Token *e) : focus(b), end(e) {
+  type_to_func[READ] = &Parser::build_read;
+  type_to_func[WRITE] = &Parser::build_write;
   type_to_func[DEFINE] = &Parser::build_define;
   type_to_func[ASSIGN] = &Parser::build_assign;
   type_to_func[EXPR] = &Parser::build_expr;
   type_to_func[BOOL_TERM] = &Parser::build_bool_term;
   type_to_func[CMP_TERM] = &Parser::build_cmp_term;
   type_to_func[UNIT] = &Parser::build_unit;
+  type_to_func[BLOCK] = &Parser::build_block;
+  type_to_func[IF_STMT] = &Parser::build_if_stmt;
+  type_to_func[WHILE_STMT] = &Parser::build_while_stmt;
+  type_to_func[STMT_LIST] = &Parser::build_stmt_list;
 }
 
-unique_ptr<Node> Parser::parse() { return build_root(); }
-
-unique_ptr<Node> Parser::build_root() {
-  auto node = make_unique<Node>(ROOT);
-  while (this->focus < end) {
-    if (this->focus->type == DEF) {
-      consume_node(DEFINE);
-    } else {
-      consume_node(ASSIGN);
-    }
-  }
-  return node;
-}
+unique_ptr<Node> Parser::parse() { return build_stmt_list(); }
 
 unique_ptr<Node> Parser::build_assign() {
   auto node = make_unique<Node>(ASSIGN);
@@ -85,30 +62,135 @@ unique_ptr<Node> Parser::build_define() {
   auto node = make_unique<Node>(DEFINE);
   consume_token(DEF);
   consume_token(ID);
+  if (focus->type == SEMICOLON) {
+      consume_token(SEMICOLON);
+  } else {
+      consume_token(EQUAL); 
+      consume_node(EXPR);
+      consume_token(SEMICOLON);
+  }
+  return node;
+}
+
+unique_ptr<Node> Parser::build_stmt_list() {
+  auto node = make_unique<Node>(STMT_LIST);
+  while (this->focus < end) {
+    switch (this->focus->type) {
+        case DEF:
+          consume_node(DEFINE);
+          break;
+        case ID:
+          consume_node(ASSIGN);
+          break;
+        case RD:
+          consume_node(READ);
+          break;
+        case WR:
+          consume_node(WRITE);
+          break;
+        case LBRACE:
+          consume_node(BLOCK);
+          break;
+        case IF:
+          consume_node(IF_STMT);
+          break;
+        case WHILE:
+          consume_node(WHILE_STMT);
+          break;
+        default:
+          return node;
+      }
+  }
+  return node;
+}
+
+unique_ptr<Node> Parser::build_block() {
+  auto node = make_unique<Node>(BLOCK);
+  consume_token(LBRACE);
+  while (this->focus < end && this->focus->type != RBRACE) {
+    consume_node(STMT_LIST);       
+  }
+  consume_token(RBRACE);
+  return node;
+}
+
+unique_ptr<Node> Parser::build_while_stmt() {
+  auto node = make_unique<Node>(WHILE_STMT);
+  consume_token(WHILE);
+  consume_token(LP);
+  consume_node(EXPR);
+  consume_token(RP);
+  switch (this->focus->type) {
+    case ID:
+      consume_node(ASSIGN);
+      break;
+    case RD:
+      consume_node(READ);
+      break;
+    case WR:
+      consume_node(WRITE);
+      break;
+    case LBRACE:
+      consume_node(BLOCK);
+      break;
+    case IF:
+      consume_node(IF_STMT);
+      break;
+    case WHILE:
+      consume_node(WHILE_STMT);
+      break;
+    default:
+      throw ParseError(__LINE__);
+  }
+  return node;
+}
+
+unique_ptr<Node> Parser::build_if_stmt() {
+  auto node = make_unique<Node>(IF_STMT);
+  consume_token(IF);
+  consume_token(LP);
+  consume_node(EXPR);
+  consume_token(RP);
+  switch (this->focus->type) {
+    case ID:
+      consume_node(ASSIGN);
+      break;
+    case RD:
+      consume_node(READ);
+      break;
+    case WR:
+      consume_node(WRITE);
+      break;
+    case LBRACE:
+      consume_node(BLOCK);
+      break;
+    case IF:
+      consume_node(IF_STMT);
+      break;
+    case WHILE:
+      consume_node(WHILE_STMT);
+      break;
+    default:
+      throw ParseError(__LINE__);
+  }
+  return node;
+}
+
+unique_ptr<Node> Parser::build_read() {
+  auto node = make_unique<Node>(READ);
+  consume_token(RD);
+  consume_token(ID);
   consume_token(SEMICOLON);
   return node;
 }
 
-/*
-unique_ptr<Node> Parser::build_func() {
-    auto node = make_unique<Node>(FUNC);
-    consume_token(ID);
-    consume_token(LP);
-    if (this->focus < end && this->focus->type == RP) {
-        consume_token(RP);
-    } else {
-        while (1) {
-            consume_node(EXPR);
-            if (this->focus < end && this->focus->type == RP) {
-                consume_token(RP);
-                break;
-            }
-            consume_token(COMMA);
-        }
-    }
-    return node;
+unique_ptr<Node> Parser::build_write() {
+  auto node = make_unique<Node>(WRITE);
+  consume_token(WR);
+  consume_node(EXPR);
+  consume_token(SEMICOLON);
+  return node;
 }
-*/
 
 unique_ptr<Node> Parser::build_expr() {
   auto node = make_unique<Node>(EXPR);

@@ -4,42 +4,7 @@
 #include <map>
 #include <vector>
 #include <string>
-
-typedef enum {
-  ASSIGN,
-  DEFINE,
-  EXPR,
-  BOOL_TERM,
-  CMP_TERM,
-  UNIT,
-  ROOT,
-  ARITH_OP,
-  BOOL_OP,
-  CMP_OP,
-  NUM,
-  ID,
-  LP,
-  RP,
-  COMMA,
-  LBRACE,
-  RBRACE,
-  SEMICOLON,
-  EQUAL,
-  DEF
-} node_t;
-
-extern std::map<node_t, const char *> type_to_name;
-
-struct Token {
-  node_t type;
-  std::string content;
-};
-
-struct Node {
-  node_t type;
-  std::vector<std::unique_ptr<Node>> kids;
-  Node(node_t t) : type(t) {}
-};
+#include "node.h"
 
 class Parser {
 public:
@@ -52,7 +17,9 @@ const Token *focus;
   std::map<node_t, std::unique_ptr<Node> (Parser::*)()> type_to_func;
 
 
-  std::unique_ptr<Node> build_root();
+  std::unique_ptr<Node> build_stmt_list();
+  std::unique_ptr<Node> build_read();
+  std::unique_ptr<Node> build_write();
   std::unique_ptr<Node> build_assign();
   std::unique_ptr<Node> build_define();
   std::unique_ptr<Node> build_func();
@@ -60,5 +27,9 @@ const Token *focus;
   std::unique_ptr<Node> build_bool_term();
   std::unique_ptr<Node> build_cmp_term();
   std::unique_ptr<Node> build_unit();
+  std::unique_ptr<Node> build_stmt();
+  std::unique_ptr<Node> build_block();
+  std::unique_ptr<Node> build_while_stmt();
+  std::unique_ptr<Node> build_if_stmt();
 };
 #endif
