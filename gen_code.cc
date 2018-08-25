@@ -151,7 +151,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         printf("call printf\n");
         printf("pop rbx\n");
 
-        printf("sub rsp, 8\n");
+        printf("add rsp, 8\n");
         break;
     
     case BLOCK:
@@ -162,7 +162,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
             }
             size_t n = symbol_stack.back().size();
             if (n > 0) {
-                printf("sub rsp, %u * 8\n", n); 
+                printf("add rsp, %u * 8\n", n); 
                 total -= n; 
             }
             symbol_stack.pop_back();
@@ -176,7 +176,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
             printf("jz %s\n", label.data());
             gen_stmt(stmt->kids[4], symbol_stack, total);
             printf("%s:\n", label.data());
-            printf("sub rsp, 8\n");
+            printf("add rsp, 8\n");
         }
         break;
     case WHILE_STMT:
@@ -188,9 +188,10 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
             printf("cmp qword [rsp], 0\n");
             printf("jz %s\n", l2.data());
             gen_stmt(stmt->kids[4], symbol_stack, total);
+            printf("add rsp, 8\n");
             printf("jmp %s\n", l1.data());
             printf("%s:\n", l2.data());
-            printf("sub rsp, 8\n");
+            printf("add rsp, 8\n");
         }
         break;
     default:
@@ -226,7 +227,7 @@ void gen_code(unique_ptr<Node> & stmt_list) {
 
     size_t n = symbol_stack.back().size();
     if (n > 0) {
-        printf("sub rsp, %u * 8\n", n); 
+        printf("add rsp, %u * 8\n", n); 
         total -= n;
     }
     symbol_stack.pop_back();
