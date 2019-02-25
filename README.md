@@ -1,11 +1,52 @@
 # C-minus-compiler, tested on mac
-nasm -f macho64  test.asm -o test.o && clang test.o && ./a.out
+
+# requirements
+- X64 machine
+- cmake 3.1.0
+- C++14 compiler
+
+# build
 ```
-def x = 1;
-def i = 0;
-while (i < 10) {
-    x = x + x;
-    i = i+1;
-}
+mkdir build
+cd build
+cmake ..
+make
+```
+
+# run
+for Mac user
+```
+./main example.c > example.asm
+nasm -f macho64 example.asm -o example.o
+clang example.o -o example
+./example
+```
+for Linux user
+```
+./main example.c > example.asm
+nasm -f elf64 example.asm -o example.o
+gcc example.o -o example
+./example
+```
+# example code
+echo
+```
+def x;
+read x;
 write x;
+```
+max
+```
+def max = 0;
+def n;
+read n;
+while (n > 0) {
+    n = n - 1;
+    def t;
+    read t;
+    if (t > max) {
+        max = t;
+    }
+}
+write max;
 ```
