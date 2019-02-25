@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
+set (CMAKE_CXX_STANDARD 14)
+
 add_library(type_to_name type_to_name.cc)
 add_library(tokenize tokenize.cc)
 add_library(parser parser.cc)

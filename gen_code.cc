@@ -6,10 +6,21 @@
 #define DEBUG
 #include "debug.h"
 
-
+// calling convention doc : https://courses.cs.washington.edu/courses/cse378/10au/sections/Section1_recap.pdf
 using namespace std;
 
 extern map<node_t, string> type_to_name;
+
+#if __APPLE__ || __MACH__
+    #define MAIN "_main"
+    #define PRINTF "_printf"
+    #define SCANF "_scanf"
+#else
+    #define MAIN "main"
+    #define PRINTF "printf"
+    #define SCANF "scanf"
+#endif
+
 
 string get_label() {
     static size_t i = 0;
@@ -131,26 +142,44 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         break;
     case READ:
         {
-             string name = stmt->kids[1]->content;
-             size_t offset = lookup_symbol(symbol_stack, name);
-            printf("push rbx\n");
+            string name = stmt->kids[1]->content;
+            size_t offset = lookup_symbol(symbol_stack, name);
+
+            // set args
             printf("lea  rdi, [rel read_format]\n");
             printf("lea  rsi, [rbp - %u * 8]\n", offset);
-            printf("xor eax, eax\n");
-            printf("call scanf\n");
-            printf("pop rbx\n");
+            printf("xor eax, eax\n"); // number of float args
+
+            // 16-byte stack allignment 
+            printf("mov rbx, rsp\n");
+            printf("and rsp, 0xfffffffffffffff0\n");
+
+            // call scanf
+            printf("call %s\n", SCANF);
+
+            // restore stack pointer
+            printf("mov rsp, rbx\n");
         }
         break;
     case WRITE:
-        gen_expr(stmt->kids[1], symbol_stack);
+        // push expression result
+        gen_expr(stmt->kids[1], symbol_stack); 
 
-        printf("push rbx\n");
+        // set args
         printf("lea  rdi, [rel write_format]\n");
-        printf("mov  rsi, [rsp + 8]\n");
-        printf("xor eax, eax\n");
-        printf("call printf\n");
-        printf("pop rbx\n");
+        printf("mov  rsi, [rsp]\n");
+        printf("xor eax, eax\n"); // number of float args
 
+        // 16-byte stack allignment 
+        printf("mov rbx, rsp\n");
+        printf("and rsp, 0xfffffffffffffff0\n");
+
+        printf("call %s\n", PRINTF);
+
+        // restore stack pointer
+        printf("mov rsp, rbx\n");
+
+        // pop expression result
         printf("add rsp, 8\n");
         break;
     
@@ -172,11 +201,11 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         {
             string label = get_label();
             gen_expr(stmt->kids[2], symbol_stack);
-            printf("cmp qword [rsp], 0\n");
+            printf("pop rax\n");
+            printf("cmp qword rax, 0\n");
             printf("jz %s\n", label.data());
             gen_stmt(stmt->kids[4], symbol_stack, total);
             printf("%s:\n", label.data());
-            printf("add rsp, 8\n");
         }
         break;
     case WHILE_STMT:
@@ -185,13 +214,12 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
             string l2 = get_label();
             printf("%s:\n", l1.data());
             gen_expr(stmt->kids[2], symbol_stack);
-            printf("cmp qword [rsp], 0\n");
+            printf("pop rax\n");
+            printf("cmp qword rax, 0\n");
             printf("jz %s\n", l2.data());
             gen_stmt(stmt->kids[4], symbol_stack, total);
-            printf("add rsp, 8\n");
             printf("jmp %s\n", l1.data());
             printf("%s:\n", l2.data());
-            printf("add rsp, 8\n");
         }
         break;
     default:
@@ -203,18 +231,20 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
 void gen_code(unique_ptr<Node> & stmt_list) {
     assert(stmt_list->type == STMT_LIST);
 
-    printf("global main\n");
-    printf("extern printf\n");
-    printf("extern scanf\n");
+    printf("global %s\n", MAIN);
+
+    printf("extern %s\n", PRINTF);
+    printf("extern %s\n", SCANF);
 
     printf("section .data\n");
     printf("write_format: db \"%%llu\", 10, 0\n");
     printf("read_format: db \"%%llu\", 0\n");
 
     printf("section .text\n");
-    printf("main:\n");
+    printf("%s:\n", MAIN);
 
-    printf("push rbp\n");
+    printf("push rbx\n"); // rbx is used for stack allignment
+    printf("push rbp\n"); // rbp is used as the start address of variables
     printf("lea rbp, [rsp - 8]\n");
 
     vector< map<string, size_t> > symbol_stack;
@@ -234,6 +264,8 @@ void gen_code(unique_ptr<Node> & stmt_list) {
     assert(symbol_stack.empty());
 
     printf("pop rbp\n");
-    printf("ret\n");
+    printf("pop rbx\n");
+
+    printf("ret\n"); // return from main
 
 }
