@@ -64,6 +64,9 @@ const uint8_t * tokenize_one(const uint8_t * s, const uint8_t * e, Token * token
     switch(*t) {
     case '+':
     case '-':
+    case '*':
+    case '/':
+    case '%':
         assign_token_and_consume(ARITH_OP, 1);
         break;
     case '&':

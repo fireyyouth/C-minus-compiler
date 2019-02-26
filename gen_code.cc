@@ -35,7 +35,33 @@ static map<string, string> op_to_jump = {
     {"||", "jnz"}
 };
 
-static vector<string> op_to_instrctions(string op, string left, string right) {
+static void print_instructions(const vector<string> & instructions) {
+    for (const auto & instruction : instructions) {
+        printf("%s\n", instruction.data()); 
+    }
+}
+
+static vector<string> op_to_unary_instructions(string op, string operand) {
+    // precondition: rax stores the left operand
+    // postcondition: rax stores the result
+    vector<string> v;
+    if (op == "*") {
+        v.push_back("mul qword " + operand);
+    } else if(op == "/") {
+        v.push_back("mov rdx, 0");
+        v.push_back("div qword " + operand);
+    } else if(op == "%") {
+        v.push_back("mov rdx, 0");
+        v.push_back("div qword " + operand);
+        v.push_back("mov rax, rdx");
+    } else {
+        throw runtime_error("unsupported op " + op);
+    }
+    return v;
+}
+
+static vector<string> op_to_binary_instructions(string op, string left, string right) {
+    // postcondition: left stores the result
     vector<string> v;
     if (op == "+") {
         v.push_back("add " + left + "," + right);
@@ -106,9 +132,17 @@ static void gen_expr(unique_ptr<Node> & node, const vector< map<string, size_t> 
                     op = node->kids[i]->content;
                 } else {
                     gen_expr(node->kids[i], symbol_stack);
-                    printf("pop rax\n");
-                    for (const auto & instruction : op_to_instrctions(op, "[rsp]", "rax")) {
-                        printf("%s\n", instruction.data()); 
+                    vector<string> instructions;
+                    if (op == "*" || op == "/" || op == "%") {
+                        printf("pop rax\n");
+                        printf("xchg [rsp], rax\n");
+                        // now rax is first operand, [rsp] is second
+                        print_instructions(op_to_unary_instructions(op, "[rsp]"));
+                        printf("mov [rsp], rax\n");
+                    } else {
+                        printf("pop rax\n");
+                        // now [rsp] is first operand, rax is second
+                        print_instructions(op_to_binary_instructions(op, "[rsp]", "rax"));
                     }
                 }
             }
