@@ -8,7 +8,7 @@ while (i < 100) {
         }
         j = j + 1;
     }
-    if (flag == 0) {
+    if (flag != 1) {
         write i;
     }
     i = i + 1;

@@ -103,13 +103,24 @@ const uint8_t * tokenize_one(const uint8_t * s, const uint8_t * e, Token * token
         break;
     case '<':
     case '>':
-        assign_token_and_consume(CMP_OP, 1);
+        if ((t + 1) < e && *(t + 1) == '=') {
+            assign_token_and_consume(CMP_OP, 2);
+        } else {
+            assign_token_and_consume(CMP_OP, 1);
+        }
         break;
     case '=':
         if ((t + 1) < e && *(t + 1) == '=') {
             assign_token_and_consume(CMP_OP, 2);
         } else {
             assign_token_and_consume(EQUAL, 1);
+        }
+        break;
+    case '!':
+        if (t + 1 < e && *(t + 1) == '=') {
+            assign_token_and_consume(CMP_OP, 2);
+        } else {
+            throw_error();
         }
         break;
     default:

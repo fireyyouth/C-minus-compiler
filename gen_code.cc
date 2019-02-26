@@ -29,8 +29,11 @@ string get_label() {
 
 static map<string, string> op_to_jump = {
     {"<", "jl"},
+    {"<=", "jle"},
     {"==", "je"},
+    {"!=", "jne"},
     {">", "jg"},
+    {">=", "jge"},
     {"&&", "jz"},
     {"||", "jnz"}
 };
@@ -67,7 +70,7 @@ static vector<string> op_to_binary_instructions(string op, string left, string r
         v.push_back("add " + left + "," + right);
     }else if(op == "-") {
         v.push_back("sub " + left + "," + right);
-    } else if (op == "<" || op == "==" || op == ">") {
+    } else if (op == "<" || op == "==" || op == ">" || op == "<=" || op == ">=" || op == "!=") {
         string l1 = get_label();
         string l2 = get_label();
         v.push_back("cmp qword " + left + "," + right);
