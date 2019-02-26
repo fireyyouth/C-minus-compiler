@@ -40,6 +40,7 @@ Parser::Parser(const Token *b, const Token *e) : focus(b), end(e) {
   type_to_func[EXPR] = &Parser::build_expr;
   type_to_func[BOOL_TERM] = &Parser::build_bool_term;
   type_to_func[CMP_TERM] = &Parser::build_cmp_term;
+  type_to_func[ADD_TERM] = &Parser::build_add_term;
   type_to_func[UNIT] = &Parser::build_unit;
   type_to_func[BLOCK] = &Parser::build_block;
   type_to_func[IF_STMT] = &Parser::build_if_stmt;
@@ -173,6 +174,31 @@ unique_ptr<Node> Parser::build_if_stmt() {
     default:
       throw ParseError(__LINE__);
   }
+  if (this->focus->type == ELSE) {
+      consume_token(ELSE);
+      switch (this->focus->type) {
+        case ID:
+          consume_node(ASSIGN);
+          break;
+        case RD:
+          consume_node(READ);
+          break;
+        case WR:
+          consume_node(WRITE);
+          break;
+        case LBRACE:
+          consume_node(BLOCK);
+          break;
+        case IF:
+          consume_node(IF_STMT);
+          break;
+        case WHILE:
+          consume_node(WHILE_STMT);
+          break;
+        default:
+          throw ParseError(__LINE__);
+      }
+  }
   return node;
 }
 
@@ -221,15 +247,29 @@ unique_ptr<Node> Parser::build_bool_term() {
 unique_ptr<Node> Parser::build_cmp_term() {
   auto node = make_unique<Node>(CMP_TERM);
   while (1) {
-    consume_node(UNIT);
-    if (this->focus < end && this->focus->type == ARITH_OP) {
-      consume_token(ARITH_OP);
+    consume_node(ADD_TERM);
+    if (this->focus < end && this->focus->type == ADD_OP) {
+      consume_token(ADD_OP);
     } else {
       break;
     }
   }
   return node;
 }
+
+unique_ptr<Node> Parser::build_add_term() {
+  auto node = make_unique<Node>(ADD_TERM);
+  while (1) {
+    consume_node(UNIT);
+    if (this->focus < end && this->focus->type == MUL_OP) {
+      consume_token(MUL_OP);
+    } else {
+      break;
+    }
+  }
+  return node;
+}
+
 
 unique_ptr<Node> Parser::build_unit() {
   auto node = make_unique<Node>(UNIT);

@@ -18,9 +18,11 @@ typedef enum {
   EXPR,
   BOOL_TERM,
   CMP_TERM,
+  ADD_TERM,
   UNIT,
   STMT_LIST,
-  ARITH_OP,
+  MUL_OP,
+  ADD_OP,
   BOOL_OP,
   NUM,
   LP,
@@ -36,6 +38,7 @@ typedef enum {
   RD,
   WR,
   IF,
+  ELSE,
   WHILE
 } node_t;
 

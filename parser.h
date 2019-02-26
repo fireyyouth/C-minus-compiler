@@ -26,6 +26,7 @@ const Token *focus;
   std::unique_ptr<Node> build_expr();
   std::unique_ptr<Node> build_bool_term();
   std::unique_ptr<Node> build_cmp_term();
+  std::unique_ptr<Node> build_add_term();
   std::unique_ptr<Node> build_unit();
   std::unique_ptr<Node> build_stmt();
   std::unique_ptr<Node> build_block();

@@ -4,8 +4,8 @@
 using namespace std;
 int main() {
   vector<node_t> types_old = {DEF, ID, SEMICOLON, ID, EQUAL, NUM, SEMICOLON};
-  vector<node_t> types = {ID,  EQUAL,    NUM, ARITH_OP, NUM, CMP_OP,
-                          NUM, ARITH_OP, NUM, ARITH_OP, NUM, SEMICOLON};
+  vector<node_t> types = {ID,  EQUAL,    NUM, ADD_OP, NUM, CMP_OP,
+                          NUM, ADD_OP, NUM, ADD_OP, NUM, SEMICOLON};
 
   vector<Token> toks;
   for (auto type : types) {

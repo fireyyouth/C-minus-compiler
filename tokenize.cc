@@ -52,6 +52,8 @@ const uint8_t * tokenize_one(const uint8_t * s, const uint8_t * e, Token * token
             token->type = WR; 
         } else if (token->content == "if") {
             token->type = IF; 
+        } else if (token->content == "else") {
+            token->type = ELSE; 
         } else if (token->content == "while") {
             token->type = WHILE; 
         } else {
@@ -64,10 +66,12 @@ const uint8_t * tokenize_one(const uint8_t * s, const uint8_t * e, Token * token
     switch(*t) {
     case '+':
     case '-':
+        assign_token_and_consume(ADD_OP, 1);
+        break;
     case '*':
     case '/':
     case '%':
-        assign_token_and_consume(ARITH_OP, 1);
+        assign_token_and_consume(MUL_OP, 1);
         break;
     case '&':
         if (t + 1 < e && *(t + 1) == '&') {

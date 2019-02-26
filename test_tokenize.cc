@@ -7,11 +7,15 @@ int main() {
    map<string, vector<node_t>> testCase = {
         {
             "def x; x=3+2;", 
-            {DEF, ID, SEMICOLON, ID, EQUAL, NUM, ARITH_OP, NUM, SEMICOLON},
+            {DEF, ID, SEMICOLON, ID, EQUAL, NUM, ADD_OP, NUM, SEMICOLON},
         }, 
         {
             "1+2==a1", 
-            {NUM, ARITH_OP, NUM, CMP_OP, ID},
+            {NUM, ADD_OP, NUM, CMP_OP, ID},
+        }, 
+        {
+            "1 * 2 - 1 <=a1", 
+            {NUM, MUL_OP, NUM, ADD_OP, NUM, CMP_OP, ID},
         }, 
    }; 
    for (auto & test : testCase) {

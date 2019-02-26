@@ -236,13 +236,27 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         break;
     case IF_STMT:
         {
-            string label = get_label();
-            gen_expr(stmt->kids[2], symbol_stack);
-            printf("pop rax\n");
-            printf("cmp qword rax, 0\n");
-            printf("jz %s\n", label.data());
-            gen_stmt(stmt->kids[4], symbol_stack, total);
-            printf("%s:\n", label.data());
+            if (stmt->kids.size() == 5) {
+                string label = get_label();
+                gen_expr(stmt->kids[2], symbol_stack);
+                printf("pop rax\n");
+                printf("cmp qword rax, 0\n");
+                printf("jz %s\n", label.data());
+                gen_stmt(stmt->kids[4], symbol_stack, total);
+                printf("%s:\n", label.data());
+            } else {
+                string l1 = get_label();
+                string l2 = get_label();
+                gen_expr(stmt->kids[2], symbol_stack);
+                printf("pop rax\n");
+                printf("cmp qword rax, 0\n");
+                printf("jz %s\n", l1.data());
+                gen_stmt(stmt->kids[4], symbol_stack, total);
+                printf("jmp %s\n", l2.data());
+                printf("%s:\n", l1.data());
+                gen_stmt(stmt->kids[stmt->kids.size() - 1], symbol_stack, total);
+                printf("%s:\n", l2.data());
+            }
         }
         break;
     case WHILE_STMT:
