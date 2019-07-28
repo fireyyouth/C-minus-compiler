@@ -1,4 +1,4 @@
-# C-minus-compiler, tested on mac
+# C-minus-compiler, compiling a C-like language to X64 asm
 
 # requirements
 - X64 machine
@@ -29,13 +29,13 @@ gcc example.o -o example
 ./example
 ```
 # example code
-echo
+echo.c
 ```
 def x;
 read x;
 write x;
 ```
-max
+max.c
 ```
 def max = 0;
 def n;
