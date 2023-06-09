@@ -1,11 +1,25 @@
-# C-minus-compiler, compiling a C-like language to X64 asm
+# overview
+A simple handcrafted compiler, compiling a C-like language to x86_64 asm
+- demo.c (print 10 fibonacci numbers)
+```
+def x = 1;
+def y = 0;
+def i = 0;
+while (i < 10) {
+    def z = x + y;
+    write z;
+    x = y;
+    y = z;
+    i = i + 1;
+}
+```
 
-# requirements
-- X64 machine
-- cmake 3.1.0
+# build requirements
+- x86_64 machine
+- cmake >= 3.1.0
 - C++14 compiler
 
-# build
+# build steps
 ```
 mkdir build
 cd build
@@ -14,39 +28,18 @@ make
 ```
 
 # run
-for Mac user
+- for Mac user, need nasm and clang
 ```
-./main example.c > example.asm
-nasm -f macho64 example.asm -o example.o
-clang example.o -o example
-./example
+./main demo.c > demo.asm
+nasm -f macho64 demo.asm -o demo.o
+clang demo.o -o demo
+./demo
 ```
-for Linux user
+- for Linux user, need nasm and gcc
 ```
-./main example.c > example.asm
-nasm -f elf64 example.asm -o example.o
-gcc example.o -o example
-./example
+./main demo.c > demo.asm
+nasm -f elf64 demo.asm -o demo.o
+gcc demo.o -o demo
+./demo
 ```
-# example code
-echo.c
-```
-def x;
-read x;
-write x;
-```
-max.c
-```
-def max = 0;
-def n;
-read n;
-while (n > 0) {
-    n = n - 1;
-    def t;
-    read t;
-    if (t > max) {
-        max = t;
-    }
-}
-write max;
-```
+
