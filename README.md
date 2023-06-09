@@ -35,11 +35,11 @@ nasm -f macho64 demo.asm -o demo.o
 clang demo.o -o demo
 ./demo
 ```
-- for Linux user, need nasm and gcc
+- for Linux user, need nasm and gcc, tested on ubuntu 20.04
 ```
 ./main demo.c > demo.asm
 nasm -f elf64 demo.asm -o demo.o
-gcc demo.o -o demo
+gcc demo.o -no-pie -o demo
 ./demo
 ```
 
