@@ -40,7 +40,7 @@ static map<string, string> op_to_jump = {
 
 static void print_instructions(const vector<string> & instructions) {
     for (const auto & instruction : instructions) {
-        printf("%s\n", instruction.data()); 
+        printf("%s\n", instruction.data());
     }
 }
 
@@ -116,14 +116,14 @@ static void gen_expr(unique_ptr<Node> & node, const vector< map<string, size_t> 
     case ID:
         {
             size_t offset = lookup_symbol(symbol_stack, node->content);
-            printf("push qword [rbp - %u * 8]\n", offset);
+            printf("push qword [rbp - %lu * 8]\n", offset);
         }
         break;
     case UNIT:
         if (node->kids.size() == 1) {
-            gen_expr(node->kids[0], symbol_stack); 
+            gen_expr(node->kids[0], symbol_stack);
         } else {
-            gen_expr(node->kids[1], symbol_stack); 
+            gen_expr(node->kids[1], symbol_stack);
         }
         break;
     default:
@@ -159,7 +159,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         {
             string name = stmt->kids[1]->content;
             if (symbol_stack.back().find(name) != symbol_stack.back().end()) {
-                throw runtime_error("redefinition in the same scope"); 
+                throw runtime_error("redefinition in the same scope");
             }
             symbol_stack.back()[name] = total++;
             if (stmt->kids.size() == 3) {
@@ -174,7 +174,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
              string name = stmt->kids[0]->content;
              size_t offset = lookup_symbol(symbol_stack, name);
             gen_expr(stmt->kids[2], symbol_stack);
-            printf("pop qword [rbp - %u * 8]\n", offset);
+            printf("pop qword [rbp - %lu * 8]\n", offset);
         }
         break;
     case READ:
@@ -184,10 +184,10 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
 
             // set args
             printf("lea  rdi, [rel read_format]\n");
-            printf("lea  rsi, [rbp - %u * 8]\n", offset);
+            printf("lea  rsi, [rbp - %lu * 8]\n", offset);
             printf("xor eax, eax\n"); // number of float args
 
-            // 16-byte stack allignment 
+            // 16-byte stack allignment
             printf("mov rbx, rsp\n");
             printf("and rsp, 0xfffffffffffffff0\n");
 
@@ -200,14 +200,14 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         break;
     case WRITE:
         // push expression result
-        gen_expr(stmt->kids[1], symbol_stack); 
+        gen_expr(stmt->kids[1], symbol_stack);
 
         // set args
         printf("lea  rdi, [rel write_format]\n");
         printf("mov  rsi, [rsp]\n");
         printf("xor eax, eax\n"); // number of float args
 
-        // 16-byte stack allignment 
+        // 16-byte stack allignment
         printf("mov rbx, rsp\n");
         printf("and rsp, 0xfffffffffffffff0\n");
 
@@ -219,7 +219,7 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
         // pop expression result
         printf("add rsp, 8\n");
         break;
-    
+
     case BLOCK:
         {
             symbol_stack.push_back(map<string, size_t>());
@@ -228,8 +228,8 @@ void gen_stmt(unique_ptr<Node> & stmt, vector< map<string, size_t> > & symbol_st
             }
             size_t n = symbol_stack.back().size();
             if (n > 0) {
-                printf("add rsp, %u * 8\n", n); 
-                total -= n; 
+                printf("add rsp, %lu * 8\n", n);
+                total -= n;
             }
             symbol_stack.pop_back();
         }
@@ -303,12 +303,12 @@ void gen_code(unique_ptr<Node> & stmt_list) {
     size_t total = 0;
 
     for (auto & stmt : stmt_list->kids) {
-        gen_stmt(stmt, symbol_stack, total);         
+        gen_stmt(stmt, symbol_stack, total);
     }
 
     size_t n = symbol_stack.back().size();
     if (n > 0) {
-        printf("add rsp, %u * 8\n", n); 
+        printf("add rsp, %lu * 8\n", n);
         total -= n;
     }
     symbol_stack.pop_back();
